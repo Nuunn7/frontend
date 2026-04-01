@@ -7,6 +7,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ActivitiesPage from './pages/activity/ActivityPage';
 import ActivityDetailPage from './pages/activity/ActivityDetailPage';
+import CertificatesPage from './pages/certificate/CertificatesPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 1000 * 60 * 5 } },
@@ -35,6 +36,7 @@ const AppRoutes = () => (
       <Route path="dashboard" element={<DashboardPage />} />
       <Route path="activities" element={<ActivitiesPage />} />
       <Route path="activities/:id" element={<ActivityDetailPage />} />
+      <Route path="certificates" element={<CertificatesPage />} />
       <Route path="certificates" element={<div style={{ padding: '32px' }}>Certificates - TODO</div>} />
     </Route>
     <Route path="*" element={<Navigate to="/login" replace />} />
