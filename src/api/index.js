@@ -5,6 +5,8 @@ export const authApi = {
   login: (data) => api.post('/auth/login', data),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
 };
 
 export const activityApi = {
@@ -24,4 +26,22 @@ export const certificateApi = {
   getById: (id) => api.get(`/certificates/${id}`),
   issue: (participationId) => api.post(`/certificates/issue/${participationId}`),
   verify: (hash) => api.get(`/certificates/verify/${hash}`),
+};
+
+export const participationApi = {
+  getAll: (params) => api.get('/participations', { params }),
+  getById: (id) => api.get(`/participations/${id}`),
+  reject: (id) => api.patch(`/participations/${id}/reject`),
+  remove: (id) => api.delete(`/participations/${id}`),
+};
+
+export const userApi = {
+  getAll: (params) => api.get('/users', { params }),
+  getById: (id) => api.get(`/users/${id}`),
+  updateProfile: (data) => api.put('/users/profile', data),
+  changePassword: (data) => api.put('/users/password', data),
+  changeRole: (id, role) => api.patch(`/users/${id}/role`, { role }),
+  remove: (id) => api.delete(`/users/${id}`),
+  getParticipations: (id) => api.get(`/users/${id}/participations`),
+  getCertificates: (id) => api.get(`/users/${id}/certificates`),
 };

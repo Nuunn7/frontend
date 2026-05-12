@@ -48,7 +48,11 @@ const LoginPage = () => {
           required
           autoComplete="current-password"
         />
-
+        <div style={{ textAlign: 'right', marginTop: '-8px', marginBottom: '8px' }}>
+          <Link to="/forgot-password" className="text-muted text-sm">
+            Нууц үг мартсан уу?
+          </Link>
+        </div>
         <button type="submit" disabled={loading}>
           {loading ? 'Нэвтэрч байна...' : 'Нэвтрэх'}
         </button>

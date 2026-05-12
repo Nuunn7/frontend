@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       api.get('/auth/me')
-        .then((res) => setUser(res.data.data))
+        .then((res) => setUser(res.data))
         .catch(() => localStorage.removeItem('token'))
         .finally(() => setLoading(false));
     } else {
@@ -21,7 +21,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (credentials) => {
     const res = await api.post('/auth/login', credentials);
-    const { user, token } = res.data.data;
+    console.log('LOGIN RESPONSE:', res.data);
+    const { user, token } = res.data;
     localStorage.setItem('token', token);
     setUser(user);
     return user;

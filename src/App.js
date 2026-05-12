@@ -8,6 +8,11 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import ActivitiesPage from './pages/activity/ActivityPage';
 import ActivityDetailPage from './pages/activity/ActivityDetailPage';
 import CertificatesPage from './pages/certificate/CertificatesPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+// import ProfilePage from './pages/profile/ProfilePage';
+// import MyParticipationsPage from './pages/participation/MyParticipationsPage';
+// import AdminUsersPage from './pages/admin/AdminUsersPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 1000 * 60 * 5 } },
@@ -31,6 +36,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
     <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<DashboardPage />} />
@@ -38,6 +45,9 @@ const AppRoutes = () => (
       <Route path="activities/:id" element={<ActivityDetailPage />} />
       <Route path="certificates" element={<CertificatesPage />} />
       <Route path="certificates" element={<div style={{ padding: '32px' }}>Certificates - TODO</div>} />
+      {/* <Route path="profile" element={<ProfilePage />} />
+      <Route path="participations" element={<MyParticipationsPage />} />
+      <Route path="admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} /> */}
     </Route>
     <Route path="*" element={<Navigate to="/login" replace />} />
   </Routes>
