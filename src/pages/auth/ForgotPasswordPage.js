@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi } from '../../api/index';
+import AuthBackground from '../../components/AuthBackground';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -24,21 +25,24 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="auth-page">
+      <AuthBackground />
       {sent ? (
-        <div className="auth-form">
+        <div className="auth-form" style={{ position: 'relative', zIndex: 1 }}>
           <h1>Имэйл илгээгдлээ</h1>
           <p className="auth-subtitle">
             <strong>{email}</strong> хаяг руу нууц үг сэргээх холбоос илгээлээ.
             Имэйлээ шалгана уу.
           </p>
           <Link to="/login">
-            <button type="button">Нэвтрэх хуудас руу буцах</button>
+            <button type="button" style={{ fontWeight: 500 }}>
+              Нэвтрэх хуудас руу буцах
+            </button>
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit} className="auth-form" style={{ position: 'relative', zIndex: 1 }}>
           <h1>Нууц үг сэргээх</h1>
-          <p className="auth-subtitle">Бүртгэлтэй имэйл хаягаа оруулна уу</p>
+          <p className="auth-subtitle">Та бүртгэлтэй имэйл хаягаа оруулна уу</p>
 
           {error && <div className="alert alert-error">{error}</div>}
 
@@ -52,7 +56,7 @@ const ForgotPasswordPage = () => {
             disabled={loading}
           />
 
-          <button type="submit" disabled={loading}>
+          <button type="submit" disabled={loading} style={{ fontWeight: 500 }}>
             {loading ? 'Илгээж байна...' : 'Холбоос илгээх'}
           </button>
 

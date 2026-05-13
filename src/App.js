@@ -4,15 +4,15 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ActivitiesPage from './pages/activity/ActivityPage';
 import ActivityDetailPage from './pages/activity/ActivityDetailPage';
 import CertificatesPage from './pages/certificate/CertificatesPage';
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-// import ProfilePage from './pages/profile/ProfilePage';
-// import MyParticipationsPage from './pages/participation/MyParticipationsPage';
-// import AdminUsersPage from './pages/admin/AdminUsersPage';
+import MyParticipationsPage from './pages/participation/MyParticipationsPage';
+import ProfilePage from './pages/profile/ProfilePage';
+import AdminUsersPage from './pages/admin/AdminUserPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 1000 * 60 * 5 } },
@@ -32,6 +32,13 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
+  if (user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
@@ -44,10 +51,9 @@ const AppRoutes = () => (
       <Route path="activities" element={<ActivitiesPage />} />
       <Route path="activities/:id" element={<ActivityDetailPage />} />
       <Route path="certificates" element={<CertificatesPage />} />
-      <Route path="certificates" element={<div style={{ padding: '32px' }}>Certificates - TODO</div>} />
-      {/* <Route path="profile" element={<ProfilePage />} />
       <Route path="participations" element={<MyParticipationsPage />} />
-      <Route path="admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} /> */}
+      <Route path="profile" element={<ProfilePage />} />
+      <Route path="admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
     </Route>
     <Route path="*" element={<Navigate to="/login" replace />} />
   </Routes>

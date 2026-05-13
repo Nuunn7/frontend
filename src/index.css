@@ -360,12 +360,21 @@ tbody td {
 }
 
 /* ── Auth pages ─────────────────────────────────────────────── */
-.auth-page {
+/* .auth-page {
   min-height: 100vh;
   background: var(--navy);
   display: flex;
   align-items: center;
   justify-content: center;
+} */
+
+.auth-page {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .auth-form {
@@ -373,8 +382,32 @@ tbody td {
   border-radius: 10px;
   padding: 40px;
   width: 380px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 2px 0 #001528,
+    0 4px 0 #001a35,
+    0 6px 0 #001f3d,
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: perspective(1000px) rotateX(1deg);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
+.auth-form:hover {
+  transform: perspective(1000px) rotateX(0deg) translateY(-4px);
+  box-shadow:
+    0 2px 0 #001528,
+    0 4px 0 #001a35,
+    0 6px 0 #001f3d,
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 28px 80px rgba(0, 0, 0, 0.35);
+}
+/* .auth-form {
+  background: var(--white);
+  border-radius: 10px;
+  padding: 40px;
+  width: 380px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+} */
 
 .auth-form h1 {
   font-size: 22px;

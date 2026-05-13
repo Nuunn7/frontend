@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import AuthBackground from '../../components/AuthBackground';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -28,10 +29,9 @@ const LoginPage = () => {
 
   return (
     <div className="auth-page">
-      <form onSubmit={handleSubmit} className="auth-form">
+      <AuthBackground />
+      <form onSubmit={handleSubmit} className="auth-form" style={{ position: 'relative', zIndex: 1 }}>
         <h1>Нэвтрэх</h1>
-        <p className="auth-subtitle">VolunteerChain системд тавтай морил</p>
-
         {error && <div className="alert alert-error">{error}</div>}
 
         <input
