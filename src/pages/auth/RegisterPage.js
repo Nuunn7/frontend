@@ -20,6 +20,13 @@ const RegisterPage = () => {
   return (
     <div className="auth-page">
       <AuthBackground />
+      <Link to="/" style={{
+        position: 'absolute', top: 20, left: 24, zIndex: 2,
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        color: '#C3D6EA', fontSize: 13, textDecoration: 'none',
+        fontWeight: 500,
+      }}> ← Нүүр хуудас
+      </Link>
       <div className="auth-form" style={{ position: 'relative', zIndex: 1, maxHeight: '90vh', overflowY: 'auto' }}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div style={styles.field}>

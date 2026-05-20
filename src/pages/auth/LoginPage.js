@@ -30,8 +30,16 @@ const LoginPage = () => {
   return (
     <div className="auth-page">
       <AuthBackground />
+      <Link to="/" style={{
+        position: 'absolute', top: 20, left: 24, zIndex: 2,
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        color: '#C3D6EA', fontSize: 13, textDecoration: 'none',
+        fontWeight: 500,
+      }}> ← Нүүр хуудас
+      </Link>
       <form onSubmit={handleSubmit} className="auth-form" style={{ position: 'relative', zIndex: 1 }}>
         <h1>Нэвтрэх</h1>
+        
         {error && <div className="alert alert-error">{error}</div>}
 
         <input

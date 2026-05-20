@@ -28,6 +28,7 @@ const ActivityDetailPage = () => {
   const [form, setForm] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [toast, setToast] = useState(null);
+  const [hours, setHours] = useState('4');
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -220,11 +221,10 @@ const ActivityDetailPage = () => {
               <table style={styles.table}>
                 <thead>
                   <tr style={styles.thead}>
-                    <th style={styles.th}>Нэр</th>
-                    <th style={styles.th}>И-мэйл</th>
-                    <th style={styles.th}>Статус</th>
-                    <th style={styles.th}>Цаг</th>
-                    <th style={styles.th}>Үйлдэл</th>
+                    <th style={{ ...styles.th, width: '15%' }}>Нэр</th>
+                    <th style={{ ...styles.th, width: '20%' }}>И-мэйл</th>
+                    <th style={{ ...styles.th, width: '15%' }}>Статус</th>
+                    <th style={{ ...styles.th, width: '50%', textAlign: 'right' }}>Үйлдэл</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -306,29 +306,36 @@ const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRe
       <td style={styles.td}>
         <span style={{ ...styles.statusBadge, background: s.bg, color: s.color }}>{s.label}</span>
       </td>
-      <td style={styles.td}>{participation.hours || '—'}</td>
-      <td style={styles.td}>
+      <td style={{ ...styles.td, textAlign: 'right' }}>
         {participation.status === 'PENDING' && (
           <div style={styles.verifyRow}>
             <input
               style={styles.hoursInput}
-              type="number" placeholder="Цаг"
-              value={hours} onChange={(e) => setHours(e.target.value)}
-              min="0" step="0.5"
+              type="number"
+              placeholder="Цаг"
+              value={hours}
+              onChange={(e) => setHours(e.target.value)}
+              min="0"
+              step="0.5"
             />
             <button
               style={{ ...styles.verifyBtn, opacity: !hours || isVerifying ? 0.6 : 1, cursor: !hours || isVerifying ? 'not-allowed' : 'pointer' }}
-              onClick={() => onVerify(hours)} disabled={!hours || isVerifying}
+              onClick={() => onVerify(hours)}
+              disabled={!hours || isVerifying}
             >
               Баталгаажуулах
             </button>
             <button
               style={{ ...styles.rejectBtn, opacity: isRejecting ? 0.6 : 1, cursor: isRejecting ? 'not-allowed' : 'pointer' }}
-              onClick={onReject} disabled={isRejecting}
+              onClick={onReject}
+              disabled={isRejecting}
             >
               Татгалзах
             </button>
           </div>
+        )}
+        {participation.status === 'APPROVED' && (
+          <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 600 }}>{participation.hours} цаг ✓</span>
         )}
       </td>
     </tr>
@@ -364,14 +371,14 @@ const styles = {
   countBadge: { fontSize: 11, fontWeight: 700, background: '#C3D6EA', color: '#00203D', padding: '2px 8px', borderRadius: 10 },
   empty: { color: '#718096', textAlign: 'center', padding: 30, background: '#F4F6FF', borderRadius: 6, fontSize: 13 },
   tableWrapper: { border: '1px solid #E0E0E0', borderRadius: 8, overflow: 'hidden' },
-  table: { width: '100%', borderCollapse: 'collapse' },
+  table: { width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' },
   thead: { background: '#00203D' },
   th: { padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#C3D6EA', letterSpacing: '0.5px', textTransform: 'uppercase' },
   tr: { borderBottom: '1px solid #E0E0E0' },
   td: { padding: '12px 14px', fontSize: 13, color: '#00203D' },
   statusBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, letterSpacing: '0.4px' },
-  verifyRow: { display: 'flex', gap: 6, alignItems: 'center' },
-  hoursInput: { width: 70, padding: '6px 8px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', outline: 'none' },
+  verifyRow: { display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' },
+  hoursInput: { width: 80, padding: '6px 8px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', outline: 'none' },
   verifyBtn: { padding: '6px 10px', background: '#A0D585', color: '#1a3a0a', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600 },
   rejectBtn: { padding: '6px 10px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600 },
 };
