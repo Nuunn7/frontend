@@ -70,12 +70,14 @@ const Layout = () => {
         </div>
 
         <ul className="nav-links">
-          <li>
-            <NavLink to="/dashboard">
-              <IconDashboard />
-              Хяналтын самбар
-            </NavLink>
-          </li>
+          {(user?.role === 'ADMIN') && (
+            <li>
+              <NavLink to="/dashboard">
+                <IconDashboard />
+                Хяналтын самбар
+              </NavLink>
+            </li>
+          )}
           <li>
             <NavLink to="/activities">
               <IconList />

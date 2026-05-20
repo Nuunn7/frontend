@@ -27,16 +27,23 @@ const PrivateRoute = ({ children }) => {
 };
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) return <Navigate to={user?.role === 'VOLUNTEER' ? '/activities' : '/dashboard'} replace />;
   return children;
 };
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
-  if (user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/activities" replace />;
+  return children;
+};
+
+const OrgAdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
+  if (user?.role === 'VOLUNTEER') return <Navigate to="/activities" replace />;
   return children;
 };
 
@@ -48,7 +55,7 @@ const AppRoutes = () => (
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
     <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-      <Route path="dashboard" element={<DashboardPage />} />
+      <Route path="dashboard" element={<OrgAdminRoute><DashboardPage /></OrgAdminRoute>} />
       <Route path="activities" element={<ActivitiesPage />} />
       <Route path="activities/:id" element={<ActivityDetailPage />} />
       <Route path="certificates" element={<CertificatesPage />} />

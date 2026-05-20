@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Calendar, Users, User, ArrowLeft, Edit2, Loader, UserPlus } from 'lucide-react';
 import { activityApi, participationApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import CardIllustration from '../../components/CardIllustration';
 
 const Toast = ({ message, type, onClose }) => (
   <div style={{
@@ -28,7 +29,6 @@ const ActivityDetailPage = () => {
   const [form, setForm] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [toast, setToast] = useState(null);
-  const [hours, setHours] = useState('4');
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -120,10 +120,10 @@ const ActivityDetailPage = () => {
   const participations = participationsData?.data?.data || [];
 
   const statusColors = {
-    UPCOMING:  { bg: '#C3D6EA',              color: '#00203D' },
-    ONGOING:   { bg: 'rgba(243,198,35,0.15)', color: '#b8860b' },
-    COMPLETED: { bg: 'rgba(160,213,133,0.2)', color: '#2e7d32' },
-    CANCELLED: { bg: 'rgba(235,76,76,0.12)',  color: '#c62828' },
+    UPCOMING:  { bg: '#C3D6EA',  color: '#00203D' },
+    ONGOING:   { bg: '#F3C623',  color: '#4a3000' },
+    COMPLETED: { bg: '#A0D585',  color: '#1a3a0a' },
+    CANCELLED: { bg: '#EB4C4C',  color: '#fff'    },
   };
 
   const statusLabel = {
@@ -143,105 +143,113 @@ const ActivityDetailPage = () => {
       </button>
 
       <div style={styles.card}>
-        <div style={styles.cardHeader}>
-          <h2 style={styles.title}>
-            {editMode ? 'Үйл ажиллагаа засварлах' : activity.title}
-          </h2>
-          <div style={styles.headerActions}>
-            <span style={{ ...styles.badge, background: sc.bg, color: sc.color }}>
-              {statusLabel[activity.status] || activity.status}
-            </span>
-            {canJoin && !editMode && (
-              <button style={styles.joinBtn} onClick={() => setShowJoinModal(true)}>
-                <UserPlus size={14} /> Бүртгүүлэх
-              </button>
-            )}
-            {(user?.role === 'ORGANIZER' || user?.role === 'ADMIN') && !editMode && (
-              <button style={styles.editBtn} onClick={() => setEditMode(true)}>
-                <Edit2 size={14} /> Засварлах
-              </button>
-            )}
-          </div>
+        <div style={styles.cardIllustration}>
+          <CardIllustration index={parseInt(id) % 5} />
+          <span style={{ ...styles.badge, background: sc.bg, color: sc.color, position: 'absolute', top: 10, right: 10, zIndex: 1 }}>
+            {statusLabel[activity.status] || activity.status}
+          </span>
         </div>
 
-        {editMode && form ? (
-          <form onSubmit={handleUpdate}>
-            <div style={styles.formGrid}>
-              <div style={styles.field}>
-                <label style={styles.label}>Нэр</label>
-                <input style={styles.input} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-              </div>
-              <div style={styles.field}>
-                <label style={styles.label}>Байршил</label>
-                <input style={styles.input} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required />
-              </div>
-              <div style={styles.field}>
-                <label style={styles.label}>Огноо</label>
-                <input style={styles.input} type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-              </div>
-              <div style={styles.field}>
-                <label style={styles.label}>Хамгийн их оролцогч</label>
-                <input style={styles.input} type="number" value={form.maxParticipants} onChange={(e) => setForm({ ...form, maxParticipants: e.target.value })} />
-              </div>
-            </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Тайлбар</label>
-              <textarea style={{ ...styles.input, height: 80, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
-            </div>
-            <div style={styles.formActions}>
-              <button style={styles.submitBtn} type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
-              </button>
-              <button style={styles.cancelBtn} type="button" onClick={() => setEditMode(false)}>Болих</button>
-            </div>
-          </form>
-        ) : (
-          <div>
-            <p style={styles.desc}>{activity.description}</p>
-            <div style={styles.infoGrid}>
-              <InfoItem icon={<MapPin size={16} />}   label="Байршил"           value={activity.location} />
-              <InfoItem icon={<Calendar size={16} />} label="Огноо"             value={new Date(activity.date).toLocaleString('mn-MN')} />
-              <InfoItem icon={<Users size={16} />}    label="Оролцогч"          value={`${activity.participant_count || 0}${activity.max_participants ? ` / ${activity.max_participants}` : ''}`} />
-              <InfoItem icon={<User size={16} />}     label="Зохион байгуулагч" value={activity.organizer_name} />
+        <div style={{ padding: 24 }}>
+          <div style={styles.cardHeader}>
+            <h2 style={styles.title}>
+              {editMode ? 'Үйл ажиллагаа засварлах' : activity.title}
+            </h2>
+            <div style={styles.headerActions}>
+              {canJoin && !editMode && (
+                <button style={styles.joinBtn} onClick={() => setShowJoinModal(true)}>
+                  <UserPlus size={14} /> Бүртгүүлэх
+                </button>
+              )}
+              {(user?.role === 'ORGANIZER' || user?.role === 'ADMIN') && !editMode && (
+                <button style={styles.editBtn} onClick={() => setEditMode(true)}>
+                  <Edit2 size={14} /> Засварлах
+                </button>
+              )}
             </div>
           </div>
-        )}
+
+          {editMode && form ? (
+            <form onSubmit={handleUpdate}>
+              <div style={styles.formGrid}>
+                <div style={styles.field}>
+                  <label style={styles.label}>Нэр</label>
+                  <input style={styles.input} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                </div>
+                <div style={styles.field}>
+                  <label style={styles.label}>Байршил</label>
+                  <input style={styles.input} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required />
+                </div>
+                <div style={styles.field}>
+                  <label style={styles.label}>Огноо</label>
+                  <input style={styles.input} type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+                </div>
+                <div style={styles.field}>
+                  <label style={styles.label}>Хамгийн их оролцогч</label>
+                  <input style={styles.input} type="number" value={form.maxParticipants} onChange={(e) => setForm({ ...form, maxParticipants: e.target.value })} />
+                </div>
+              </div>
+              <div style={styles.field}>
+                <label style={styles.label}>Тайлбар</label>
+                <textarea style={{ ...styles.input, height: 80, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+              </div>
+              <div style={styles.formActions}>
+                <button style={styles.submitBtn} type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
+                </button>
+                <button style={styles.cancelBtn} type="button" onClick={() => setEditMode(false)}>Болих</button>
+              </div>
+            </form>
+          ) : (
+            <div>
+              <p style={styles.desc}>{activity.description}</p>
+              <div style={styles.infoGrid}>
+                <InfoItem icon={<MapPin size={16} />}   label="Байршил"           value={activity.location} />
+                <InfoItem icon={<Calendar size={16} />} label="Огноо"             value={new Date(activity.date).toLocaleString('mn-MN')} />
+                <InfoItem icon={<Users size={16} />}    label="Оролцогч"          value={`${activity.participant_count || 0}${activity.max_participants ? ` / ${activity.max_participants}` : ''}`} />
+                <InfoItem icon={<User size={16} />}     label="Зохион байгуулагч" value={activity.organizer_name} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {(user?.role === 'ORGANIZER' || user?.role === 'ADMIN') && (
         <div style={styles.card}>
-          <div style={styles.sectionHeader}>
-            <h3 style={styles.sectionTitle}>Оролцогчид</h3>
-            <span style={styles.countBadge}>{participations.length}</span>
-          </div>
-          {participations.length === 0 ? (
-            <p style={styles.empty}>Оролцогч байхгүй байна</p>
-          ) : (
-            <div style={styles.tableWrapper}>
-              <table style={styles.table}>
-                <thead>
-                  <tr style={styles.thead}>
-                    <th style={{ ...styles.th, width: '15%' }}>Нэр</th>
-                    <th style={{ ...styles.th, width: '20%' }}>И-мэйл</th>
-                    <th style={{ ...styles.th, width: '15%' }}>Статус</th>
-                    <th style={{ ...styles.th, width: '50%', textAlign: 'right' }}>Үйлдэл</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {participations.map((p) => (
-                    <ParticipationRow
-                      key={p.id}
-                      participation={p}
-                      onVerify={(hours) => verifyMutation.mutate({ userId: p.user_id, hours })}
-                      onReject={() => rejectMutation.mutate(p.id)}
-                      isVerifying={verifyMutation.isPending}
-                      isRejecting={rejectMutation.isPending}
-                    />
-                  ))}
-                </tbody>
-              </table>
+          <div style={{ padding: 24 }}>
+            <div style={styles.sectionHeader}>
+              <h3 style={styles.sectionTitle}>Оролцогчид</h3>
+              <span style={styles.countBadge}>{participations.length}</span>
             </div>
-          )}
+            {participations.length === 0 ? (
+              <p style={styles.empty}>Оролцогч байхгүй байна</p>
+            ) : (
+              <div style={styles.tableWrapper}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr style={styles.thead}>
+                      <th style={{ ...styles.th, width: '15%' }}>Нэр</th>
+                      <th style={{ ...styles.th, width: '20%' }}>И-мэйл</th>
+                      <th style={{ ...styles.th, width: '15%' }}>Статус</th>
+                      <th style={{ ...styles.th, width: '50%', textAlign: 'right' }}>Үйлдэл</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {participations.map((p) => (
+                      <ParticipationRow
+                        key={p.id}
+                        participation={p}
+                        onVerify={(hours) => verifyMutation.mutate({ userId: p.user_id, hours })}
+                        onReject={() => rejectMutation.mutate(p.id)}
+                        isVerifying={verifyMutation.isPending}
+                        isRejecting={rejectMutation.isPending}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -249,8 +257,12 @@ const ActivityDetailPage = () => {
         <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <p style={{ fontSize: 14, color: '#4A5568', margin: '16px 0' }}>
-              Та энэ үйл ажиллагаанд бүртгүүлэхдээ итгэлтэй байна уу?
+              Та <strong>{activity.title}</strong> үйл ажиллагаанд бүртгүүлэхдээ итгэлтэй байна уу?
             </p>
+            <div style={styles.infoGrid}>
+              <InfoItem icon={<MapPin size={16} />}   label="Байршил" value={activity.location} />
+              <InfoItem icon={<Calendar size={16} />} label="Огноо"   value={new Date(activity.date).toLocaleDateString('mn-MN')} />
+            </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
               <button
                 style={{ padding: '9px 24px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}
@@ -291,7 +303,7 @@ const InfoItem = ({ icon, label, value }) => (
 );
 
 const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRejecting }) => {
-  const [hours, setHours] = useState('');
+  const [hours, setHours] = useState('4');
   const statusMap = {
     APPROVED: { bg: 'rgba(160,213,133,0.2)', color: '#2e7d32', label: 'Баталгаажсан' },
     REJECTED: { bg: 'rgba(235,76,76,0.12)',  color: '#c62828', label: 'Татгалзсан'   },
@@ -311,24 +323,19 @@ const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRe
           <div style={styles.verifyRow}>
             <input
               style={styles.hoursInput}
-              type="number"
-              placeholder="Цаг"
-              value={hours}
-              onChange={(e) => setHours(e.target.value)}
-              min="0"
-              step="0.5"
+              type="number" placeholder="Цаг"
+              value={hours} onChange={(e) => setHours(e.target.value)}
+              min="0" step="0.5"
             />
             <button
               style={{ ...styles.verifyBtn, opacity: !hours || isVerifying ? 0.6 : 1, cursor: !hours || isVerifying ? 'not-allowed' : 'pointer' }}
-              onClick={() => onVerify(hours)}
-              disabled={!hours || isVerifying}
+              onClick={() => onVerify(hours)} disabled={!hours || isVerifying}
             >
               Баталгаажуулах
             </button>
             <button
               style={{ ...styles.rejectBtn, opacity: isRejecting ? 0.6 : 1, cursor: isRejecting ? 'not-allowed' : 'pointer' }}
-              onClick={onReject}
-              disabled={isRejecting}
+              onClick={onReject} disabled={isRejecting}
             >
               Татгалзах
             </button>
@@ -345,12 +352,13 @@ const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRe
 const styles = {
   loading: { display: 'flex', alignItems: 'center', gap: 10, padding: 60, color: '#718096', fontSize: 14 },
   backBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 20, padding: '7px 14px', background: 'transparent', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#00203D', fontWeight: 500 },
-  card: { background: '#FFFFFF', border: '1px solid #E0E0E0', borderRadius: 8, padding: 24, marginBottom: 20, boxShadow: '0 2px 6px rgba(0,32,61,0.06)' },
+  card: { background: '#FFFFFF', border: '1px solid #E0E0E0', borderRadius: 8, marginBottom: 20, boxShadow: '0 2px 6px rgba(0,32,61,0.06)', overflow: 'hidden' },
+  cardIllustration: { position: 'relative', overflow: 'hidden' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 },
   title: { fontSize: 20, fontWeight: 700, color: '#00203D' },
   headerActions: { display: 'flex', alignItems: 'center', gap: 10 },
-  badge: { padding: '3px 10px', borderRadius: 4, fontSize: 11, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' },
-  joinBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#A0D585', color: '#1a3a0a', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
+  badge: { fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px' },
+  joinBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(160,213,133,0.25)', color: '#2e7d32', border: '1px solid rgba(160,213,133,0.4)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   editBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#00203D', color: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   desc: { color: '#4A5568', lineHeight: 1.7, marginBottom: 20, fontSize: 14 },
   infoGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, background: '#F4F6FF', borderRadius: 6, padding: 20 },

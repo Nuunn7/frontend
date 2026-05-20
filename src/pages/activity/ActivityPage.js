@@ -7,101 +7,7 @@ import {
 } from 'lucide-react';
 import { activityApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
-
-const PALETTES = [
-  { from: '#1a6b3c', to: '#2ecc71', accent: '#a8edca', sky: '#0d4f2c' },
-  { from: '#1a3a6b', to: '#3b82f6', accent: '#a8c8ed', sky: '#0d2550' },
-  { from: '#6b1a3a', to: '#e05c8a', accent: '#edaac8', sky: '#500d2c' },
-  { from: '#6b4a1a', to: '#f59e0b', accent: '#fde68a', sky: '#4a2e08' },
-  { from: '#2d1a6b', to: '#8b5cf6', accent: '#c4b5fd', sky: '#1a0d50' },
-];
-
-const CardIllustration = ({ index = 0 }) => {
-  const p = PALETTES[index % PALETTES.length];
-  const id = `grad-${index}`;
-  return (
-    <svg width="100%" height="110" viewBox="0 0 320 110"
-      xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor={p.sky} />
-          <stop offset="60%"  stopColor={p.from} />
-          <stop offset="100%" stopColor={p.to} />
-        </linearGradient>
-      </defs>
-      <rect width="320" height="110" fill={`url(#${id})`} />
-      <ellipse cx="160" cy="130" rx="200" ry="60" fill="rgba(0,0,0,0.15)" />
-      <circle cx="270" cy="20" r="40" fill={p.to}     opacity="0.15" />
-      <circle cx="290" cy="5"  r="25" fill={p.accent} opacity="0.1"  />
-      <circle cx="40"  cy="90" r="35" fill={p.from}   opacity="0.2"  />
-      <ellipse cx="160" cy="112" rx="320" ry="18" fill="rgba(0,0,0,0.25)" />
-      <g fill={p.accent} opacity="0.9">
-        <circle cx="60" cy="72" r="6" />
-        <rect x="55" y="78" width="10" height="18" rx="3" />
-        <rect x="48" y="82" width="8"  height="3"  rx="1" />
-        <rect x="62" y="82" width="8"  height="3"  rx="1" />
-        <rect x="56" y="96" width="4"  height="10" rx="1" />
-        <rect x="60" y="96" width="4"  height="10" rx="1" />
-      </g>
-      <g fill={p.accent} opacity="0.75">
-        <circle cx="100" cy="75" r="5.5" />
-        <rect x="95.5" y="80" width="9"   height="16" rx="3" />
-        <rect x="89"   y="84" width="7"   height="3"  rx="1" />
-        <rect x="103"  y="84" width="7"   height="3"  rx="1" />
-        <rect x="96"   y="96" width="3.5" height="9"  rx="1" />
-        <rect x="100"  y="96" width="3.5" height="9"  rx="1" />
-      </g>
-      <g fill={p.accent} opacity="0.85">
-        <circle cx="140" cy="70" r="7" />
-        <rect x="134" y="77" width="12" height="20" rx="3" />
-        <rect x="126" y="81" width="9"  height="3"  rx="1" />
-        <rect x="145" y="81" width="9"  height="3"  rx="1" />
-        <rect x="135" y="97" width="4"  height="11" rx="1" />
-        <rect x="139" y="97" width="4"  height="11" rx="1" />
-      </g>
-      <g fill={p.accent} opacity="0.7">
-        <circle cx="175" cy="76" r="5" />
-        <rect x="170" y="81" width="9" height="15" rx="3" />
-        <rect x="164" y="85" width="7" height="3"  rx="1" />
-        <rect x="178" y="85" width="7" height="3"  rx="1" />
-        <rect x="171" y="96" width="3" height="9"  rx="1" />
-        <rect x="175" y="96" width="3" height="9"  rx="1" />
-      </g>
-      <g fill={p.accent} opacity="0.8">
-        <circle cx="210" cy="73" r="6" />
-        <rect x="204" y="79" width="11" height="18" rx="3" />
-        <rect x="197" y="83" width="8"  height="3"  rx="1" />
-        <rect x="213" y="83" width="8"  height="3"  rx="1" />
-        <rect x="205" y="97" width="4"  height="10" rx="1" />
-        <rect x="209" y="97" width="4"  height="10" rx="1" />
-      </g>
-      <g fill={p.accent} opacity="0.65">
-        <circle cx="245" cy="77" r="5" />
-        <rect x="240" y="82" width="9" height="15" rx="3" />
-        <rect x="234" y="86" width="7" height="3"  rx="1" />
-        <rect x="248" y="86" width="7" height="3"  rx="1" />
-        <rect x="241" y="97" width="3" height="9"  rx="1" />
-        <rect x="245" y="97" width="3" height="9"  rx="1" />
-      </g>
-      <line x1="66"  y1="80" x2="100" y2="82" stroke={p.accent} strokeWidth="1.5" opacity="0.4" strokeDasharray="3 2" />
-      <line x1="106" y1="80" x2="135" y2="78" stroke={p.accent} strokeWidth="1.5" opacity="0.4" strokeDasharray="3 2" />
-      <line x1="147" y1="79" x2="171" y2="82" stroke={p.accent} strokeWidth="1.5" opacity="0.4" strokeDasharray="3 2" />
-      <line x1="180" y1="81" x2="205" y2="80" stroke={p.accent} strokeWidth="1.5" opacity="0.4" strokeDasharray="3 2" />
-      <line x1="216" y1="80" x2="241" y2="83" stroke={p.accent} strokeWidth="1.5" opacity="0.4" strokeDasharray="3 2" />
-      <circle cx="10" cy="18" r="1.5" fill={p.accent} opacity="0.5" />
-      <circle cx="30" cy="10" r="1.5" fill={p.accent} opacity="0.5" />
-      <circle cx="50" cy="22" r="1.5" fill={p.accent} opacity="0.5" />
-      <circle cx="70" cy="12" r="1.5" fill={p.accent} opacity="0.4" />
-      <circle cx="90" cy="20" r="1.5" fill={p.accent} opacity="0.4" />
-      <line x1="10" y1="18" x2="30" y2="10" stroke={p.accent} strokeWidth="0.6" opacity="0.25" />
-      <line x1="30" y1="10" x2="50" y2="22" stroke={p.accent} strokeWidth="0.6" opacity="0.25" />
-      <line x1="50" y1="22" x2="70" y2="12" stroke={p.accent} strokeWidth="0.6" opacity="0.25" />
-      <line x1="70" y1="12" x2="90" y2="20" stroke={p.accent} strokeWidth="0.6" opacity="0.25" />
-      <text x="10" y="38" fill={p.accent} fontSize="7" fontFamily="monospace" opacity="0.55">Сайн дурын үйл ажиллагаа</text>
-      <text x="10" y="48" fill={p.accent} fontSize="6" fontFamily="monospace" opacity="0.35">Блокчейнээр баталгаажуулсан</text>
-    </svg>
-  );
-};
+import CardIllustration from '../../components/CardIllustration';
 
 const Toast = ({ message, type, onClose }) => (
   <div style={{
@@ -117,17 +23,17 @@ const Toast = ({ message, type, onClose }) => (
   </div>
 );
 
-const statusStyle = (status) => {
+export const statusStyle = (status) => {
   switch (status) {
-    case 'UPCOMING':  return { bg: 'rgba(195,214,234,0.9)', color: '#00203D' };
-    case 'ONGOING':   return { bg: 'rgba(243,198,35,0.9)',  color: '#4a3000' };
-    case 'COMPLETED': return { bg: 'rgba(160,213,133,0.9)', color: '#1a3a0a' };
-    case 'CANCELLED': return { bg: 'rgba(235,76,76,0.9)',   color: '#fff'    };
-    default:          return { bg: 'rgba(240,240,240,0.9)', color: '#555'    };
+    case 'UPCOMING':  return { bg: 'rgba(195,214,234,0.5)', color: '#00203D' };
+    case 'ONGOING':   return { bg: 'rgba(0,32,61,0.6)',     color: '#C3D6EA' };
+    case 'COMPLETED': return { bg: 'rgba(160,213,133,0.5)', color: '#00203D' };
+    case 'CANCELLED': return { bg: 'rgba(235,76,76,0.5)',   color: '#fff'    };
+    default:          return { bg: 'rgba(0,32,61,0.3)',     color: '#C3D6EA' };
   }
 };
 
-const statusLabel = {
+export const statusLabel = {
   UPCOMING: 'Удахгүй', ONGOING: 'Явагдаж байна',
   COMPLETED: 'Дууссан', CANCELLED: 'Цуцлагдсан',
 };
@@ -151,11 +57,11 @@ const ActivitiesPage = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['activities', search, statusFilter],
-  queryFn: () => activityApi.getAll({
-    limit: 50,
-    ...(search && { search }),
-    ...(statusFilter && { status: statusFilter }),
-  }),  
+    queryFn: () => activityApi.getAll({
+      limit: 50,
+      ...(search && { search }),
+      ...(statusFilter && { status: statusFilter }),
+    }),
   });
 
   const createMutation = useMutation({
@@ -214,10 +120,7 @@ const ActivitiesPage = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
           {search && (
-            <button
-              style={styles.clearBtn}
-              onClick={() => setSearch('')}
-            >
+            <button style={styles.clearBtn} onClick={() => setSearch('')}>
               <X size={13} />
             </button>
           )}
@@ -286,7 +189,12 @@ const ActivitiesPage = () => {
               <div key={activity.id} style={styles.card} onClick={() => navigate(`/activities/${activity.id}`)}>
                 <div style={styles.cardIllustration}>
                   <CardIllustration index={index} />
-                  <span style={{ ...styles.badge, background: st.bg, color: st.color, position: 'absolute', top: 10, right: 10 }}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4,
+                    whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px',
+                    display: 'inline-block', position: 'absolute', top: 10, right: 10, zIndex: 1,
+                    background: st.bg, color: st.color,
+                  }}>
                     {statusLabel[activity.status] || activity.status}
                   </span>
                 </div>
@@ -354,10 +262,10 @@ const styles = {
   submitBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', background: '#00203D', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 },
   card: { background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8, cursor: 'pointer', transition: 'box-shadow 0.15s ease', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-  cardIllustration: { position: 'relative' },
+  cardIllustration: { position: 'relative', overflow: 'hidden', flexShrink: 0 },
   cardBody: { padding: 20, display: 'flex', flexDirection: 'column', flex: 1 },
   cardTitle: { fontSize: 14, fontWeight: 700, color: '#00203D', marginBottom: 12, minHeight: 40 },
-  badge: { fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px' },
+  badge: { fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'inline-block' },
   cardInfo: { display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 12, borderTop: '1px solid #E0E0E0', marginBottom: 12 },
   infoRow: { display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#718096' },
   cardFooter: { display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 'auto' },
