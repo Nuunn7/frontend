@@ -16,7 +16,7 @@ export const activityApi = {
   update: (id, data) => api.put(`/activities/${id}`, data),
   delete: (id) => api.delete(`/activities/${id}`),
   join: (id) => api.post(`/activities/${id}/join`),
-  verifyParticipation: (activityId, userId, data) =>
+  cancel: (id) => api.patch(`/activities/${id}/cancel`),  verifyParticipation: (activityId, userId, data) =>
     api.post(`/activities/${activityId}/verify/${userId}`, data),
     getParticipations: (id) => api.get(`/activities/${id}/participations`),
 };

@@ -10,16 +10,11 @@ const PALETTES = [
 
 export const statusStyle = (status) => {
   switch (status) {
-    case 'UPCOMING':
-      return { backgroundColor: 'rgba(195,214,234,0.5)', color: '#00203D' };
-    case 'ONGOING':
-      return { backgroundColor: 'rgba(0,32,61,0.6)', color: '#C3D6EA' };
-    case 'COMPLETED':
-      return { backgroundColor: 'rgba(160,213,133,0.5)', color: '#00203D' };
-    case 'CANCELLED':
-      return { backgroundColor: 'rgba(235,76,76,0.5)', color: '#ffffff' };
-    default:
-      return {};
+    case 'UPCOMING':  return { bg: 'rgba(195,214,234,0.5)', color: '#00203D' };
+    case 'ONGOING':   return { bg: 'rgba(0,32,61,0.6)',     color: '#C3D6EA' };
+    case 'COMPLETED': return { bg: 'rgba(160,213,133,0.5)', color: '#00203D' };
+    case 'CANCELLED': return { bg: 'rgba(235,76,76,0.7)',   color: '#fff'    };
+    default:          return { bg: 'rgba(0,32,61,0.3)',     color: '#C3D6EA' };
   }
 };
 

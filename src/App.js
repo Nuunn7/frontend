@@ -29,8 +29,7 @@ const PrivateRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading, user } = useAuth();
   if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
-  if (isAuthenticated) return <Navigate to={user?.role === 'VOLUNTEER' ? '/activities' : '/dashboard'} replace />;
-  return children;
+  if (isAuthenticated) return <Navigate to={user?.role === 'ADMIN' ? '/dashboard' : '/activities'} replace />;  return children;
 };
 
 const AdminRoute = ({ children }) => {
@@ -43,7 +42,7 @@ const AdminRoute = ({ children }) => {
 const OrgAdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
-  if (user?.role === 'VOLUNTEER') return <Navigate to="/activities" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/activities" replace />;
   return children;
 };
 

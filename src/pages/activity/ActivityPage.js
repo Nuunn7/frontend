@@ -25,17 +25,49 @@ const Toast = ({ message, type, onClose }) => (
 
 export const statusStyle = (status) => {
   switch (status) {
-    case 'UPCOMING':  return { bg: 'rgba(195,214,234,0.5)', color: '#00203D' };
-    case 'ONGOING':   return { bg: 'rgba(0,32,61,0.6)',     color: '#C3D6EA' };
-    case 'COMPLETED': return { bg: 'rgba(160,213,133,0.5)', color: '#00203D' };
-    case 'CANCELLED': return { bg: 'rgba(235,76,76,0.5)',   color: '#fff'    };
-    default:          return { bg: 'rgba(0,32,61,0.3)',     color: '#C3D6EA' };
+    case 'UPCOMING':  return { bg: 'rgba(219,234,254,0.7)', color: '#1e40af' };
+    case 'ONGOING':   return { bg: 'rgba(239,246,255,0.9)', color: '#1d4ed8' };
+    case 'COMPLETED': return { bg: 'rgba(220,252,231,0.7)', color: '#166534' };
+    case 'CANCELLED': return { bg: 'rgba(254,226,226,0.7)', color: '#991b1b' };
+    default:          return { bg: 'rgba(243,244,246,0.8)', color: '#374151' };
   }
 };
 
 export const statusLabel = {
   UPCOMING: 'Удахгүй', ONGOING: 'Явагдаж байна',
   COMPLETED: 'Дууссан', CANCELLED: 'Цуцлагдсан',
+};
+
+const ActivityCard = ({ activity, index, navigate }) => {
+  const st = statusStyle(activity.status);
+  return (
+    <div style={styles.card} onClick={() => navigate(`/activities/${activity.id}`)}>
+      <div style={styles.cardIllustration}>
+        <CardIllustration index={index} />
+        <span style={{
+          fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4,
+          whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px',
+          display: 'inline-block', position: 'absolute', top: 10, right: 10, zIndex: 1,
+          background: st.bg, color: st.color,
+        }}>
+          {statusLabel[activity.status] || activity.status}
+        </span>
+      </div>
+      <div style={styles.cardBody}>
+        <h3 style={styles.cardTitle}>{activity.title}</h3>
+        <div style={styles.cardInfo}>
+          <div style={styles.infoRow}><MapPin size={13} color="#718096" /><span>{activity.location}</span></div>
+          <div style={styles.infoRow}><Calendar size={13} color="#718096" /><span>{new Date(activity.date).toLocaleDateString('mn-MN')}</span></div>
+          <div style={styles.infoRow}><Users size={13} color="#718096" /><span>{activity.participant_count || 0}{activity.max_participants ? ` / ${activity.max_participants}` : ''} оролцогч</span></div>
+        </div>
+        <div style={styles.cardFooter}>
+          <button style={styles.detailBtn} onClick={(e) => { e.stopPropagation(); navigate(`/activities/${activity.id}`); }}>
+            Дэлгэрэнгүй <ChevronRight size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const ActivitiesPage = () => {
@@ -46,6 +78,7 @@ const ActivitiesPage = () => {
   const [toast, setToast] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [organizerFilter, setOrganizerFilter] = useState('');
   const [form, setForm] = useState({
     title: '', description: '', date: '', location: '', maxParticipants: '',
   });
@@ -80,7 +113,23 @@ const ActivitiesPage = () => {
     createMutation.mutate(form);
   };
 
-  const activities = data?.data?.data || [];
+  const allActivities = (data?.data?.data || []).filter(a =>
+    user?.role === 'VOLUNTEER' ? a.status !== 'CANCELLED' : true
+  );
+
+  // Unique organizers for admin filter
+  const organizers = [...new Map(
+    allActivities
+      .filter(a => a.organizer_name)
+      .map(a => [a.organizer_id, { id: a.organizer_id, name: a.organizer_name }])
+  ).values()];
+
+  // Apply organizer filter
+  const activities = organizerFilter
+    ? allActivities.filter(a => a.organizer_id === parseInt(organizerFilter))
+    : allActivities;
+
+  const isOrgAdmin = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
 
   if (isLoading) {
     return (
@@ -100,7 +149,7 @@ const ActivitiesPage = () => {
           <h1 style={styles.title}>Үйл ажиллагаа</h1>
           <p style={styles.subtitle}>Нийт {activities.length} үйл ажиллагаа</p>
         </div>
-        {(user?.role === 'ORGANIZER' || user?.role === 'ADMIN') && (
+        {isOrgAdmin && (
           <button
             style={showForm ? styles.btnCancel : styles.btnAdd}
             onClick={() => setShowForm(!showForm)}
@@ -136,6 +185,18 @@ const ActivitiesPage = () => {
           <option value="COMPLETED">Дууссан</option>
           <option value="CANCELLED">Цуцлагдсан</option>
         </select>
+        {user?.role === 'ADMIN' && organizers.length > 1 && (
+          <select
+            style={styles.select}
+            value={organizerFilter}
+            onChange={(e) => setOrganizerFilter(e.target.value)}
+          >
+            <option value="">Бүгд</option>
+            {organizers.map(o => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {showForm && (
@@ -164,9 +225,11 @@ const ActivitiesPage = () => {
               <label style={styles.label}>Тайлбар</label>
               <textarea style={{ ...styles.input, height: 80, resize: 'vertical' }} placeholder="Үйл ажиллагааны дэлгэрэнгүй тайлбар..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
             </div>
-            <button style={styles.submitBtn} type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? <><Loader size={14} /> Хадгалж байна...</> : <><Save size={14} /> Хадгалах</>}
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button style={styles.submitBtn} type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? <><Loader size={14} /> Хадгалж байна...</> : <><Save size={14} /> Хадгалах</>}
+              </button>
+            </div>
           </form>
         </div>
       )}
@@ -175,57 +238,17 @@ const ActivitiesPage = () => {
         <div style={styles.empty}>
           <Inbox size={40} color="#C3D6EA" style={{ marginBottom: 12 }} />
           <p style={{ fontWeight: 600, color: '#00203D', marginBottom: 4 }}>
-            {search || statusFilter ? 'Хайлтад тохирох үйл ажиллагаа олдсонгүй' : 'Үйл ажиллагаа байхгүй байна'}
+            {search || statusFilter || organizerFilter ? 'Хайлтад тохирох үйл ажиллагаа олдсонгүй' : 'Үйл ажиллагаа байхгүй байна'}
           </p>
           <small style={{ color: '#718096' }}>
-            {search || statusFilter ? 'Өөр түлхүүр үгээр хайна уу.' : 'Шинэ үйл ажиллагаа нэмэхийн тулд дээрх товчийг дар.'}
+            {search || statusFilter || organizerFilter ? 'Өөр нөхцлөөр хайна уу.' : 'Шинэ үйл ажиллагаа нэмэхийн тулд дээрх товчийг дар.'}
           </small>
         </div>
       ) : (
         <div style={styles.grid}>
-          {activities.map((activity, index) => {
-            const st = statusStyle(activity.status);
-            return (
-              <div key={activity.id} style={styles.card} onClick={() => navigate(`/activities/${activity.id}`)}>
-                <div style={styles.cardIllustration}>
-                  <CardIllustration index={index} />
-                  <span style={{
-                    fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4,
-                    whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px',
-                    display: 'inline-block', position: 'absolute', top: 10, right: 10, zIndex: 1,
-                    background: st.bg, color: st.color,
-                  }}>
-                    {statusLabel[activity.status] || activity.status}
-                  </span>
-                </div>
-                <div style={styles.cardBody}>
-                  <h3 style={styles.cardTitle}>{activity.title}</h3>
-                  <div style={styles.cardInfo}>
-                    <div style={styles.infoRow}>
-                      <MapPin size={13} color="#718096" />
-                      <span>{activity.location}</span>
-                    </div>
-                    <div style={styles.infoRow}>
-                      <Calendar size={13} color="#718096" />
-                      <span>{new Date(activity.date).toLocaleDateString('mn-MN')}</span>
-                    </div>
-                    <div style={styles.infoRow}>
-                      <Users size={13} color="#718096" />
-                      <span>{activity.participant_count || 0}{activity.max_participants ? ` / ${activity.max_participants}` : ''} оролцогч</span>
-                    </div>
-                  </div>
-                  <div style={styles.cardFooter}>
-                    <button
-                      style={styles.detailBtn}
-                      onClick={(e) => { e.stopPropagation(); navigate(`/activities/${activity.id}`); }}
-                    >
-                      Дэлгэрэнгүй <ChevronRight size={13} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {activities.map((activity, index) => (
+            <ActivityCard key={activity.id} activity={activity} index={index} navigate={navigate} />
+          ))}
         </div>
       )}
 
@@ -258,14 +281,13 @@ const styles = {
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
   field: { marginBottom: 16 },
   label: { display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6, color: '#4A5568', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' },
-  input: { width: '100%', padding: '9px 12px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', boxSizing: 'border-box', outline: 'none' },
+  input: { width: '100%', padding: '9px 12px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' },
   submitBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', background: '#00203D', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 },
   card: { background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8, cursor: 'pointer', transition: 'box-shadow 0.15s ease', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
   cardIllustration: { position: 'relative', overflow: 'hidden', flexShrink: 0 },
   cardBody: { padding: 20, display: 'flex', flexDirection: 'column', flex: 1 },
   cardTitle: { fontSize: 14, fontWeight: 700, color: '#00203D', marginBottom: 12, minHeight: 40 },
-  badge: { fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'inline-block' },
   cardInfo: { display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 12, borderTop: '1px solid #E0E0E0', marginBottom: 12 },
   infoRow: { display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#718096' },
   cardFooter: { display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 'auto' },

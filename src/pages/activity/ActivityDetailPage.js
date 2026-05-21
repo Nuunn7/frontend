@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Calendar, Users, User, ArrowLeft, Edit2, Loader, UserPlus } from 'lucide-react';
+import { MapPin, Calendar, Users, User, ArrowLeft, Edit2, Loader, UserPlus, XCircle } from 'lucide-react';
 import { activityApi, participationApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import CardIllustration from '../../components/CardIllustration';
@@ -28,6 +28,7 @@ const ActivityDetailPage = () => {
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = 'success') => {
@@ -69,6 +70,20 @@ const ActivityDetailPage = () => {
       showToast('Үйл ажиллагаа амжилттай шинэчлэгдлээ!');
     },
     onError: (err) => showToast(err.response?.data?.message || 'Алдаа гарлаа', 'error'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => activityApi.cancel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['activity', id]);
+      queryClient.invalidateQueries(['activities']);
+      setShowCancelModal(false);
+      showToast('Үйл ажиллагаа цуцлагдлаа.');
+    },
+    onError: (err) => {
+      setShowCancelModal(false);
+      showToast(err.response?.data?.message || 'Алдаа гарлаа', 'error');
+    },
   });
 
   const joinMutation = useMutation({
@@ -120,10 +135,11 @@ const ActivityDetailPage = () => {
   const participations = participationsData?.data?.data || [];
 
   const statusColors = {
-    UPCOMING:  { bg: '#C3D6EA',  color: '#00203D' },
-    ONGOING:   { bg: '#F3C623',  color: '#4a3000' },
-    COMPLETED: { bg: '#A0D585',  color: '#1a3a0a' },
-    CANCELLED: { bg: '#EB4C4C',  color: '#fff'    },
+    UPCOMING:  { bg: '#DBEAFE', color: '#1E40AF' },
+    ONGOING:   { bg: '#FEF08A', color: '#713F12' },
+    COMPLETED: { bg: '#DCFCE7', color: '#166534' },
+    CANCELLED: { bg: '#FEE2E2', color: '#991B1B' },
+    DEFAULT:   { bg: '#F3F4F6', color: '#374151' },
   };
 
   const statusLabel = {
@@ -133,6 +149,20 @@ const ActivityDetailPage = () => {
 
   const sc = statusColors[activity.status] || statusColors.UPCOMING;
   const canJoin = user?.role === 'VOLUNTEER' && activity.status === 'UPCOMING';
+
+  const canCancel = (
+    activity.status !== 'CANCELLED' &&
+    activity.status !== 'COMPLETED' &&
+    (
+      user?.role === 'ADMIN' ||
+      (user?.role === 'ORGANIZER' && activity.organizer_id === user.id)
+    )
+  );
+
+  const canEdit = (
+    user?.role === 'ADMIN' ||
+    (user?.role === 'ORGANIZER' && activity.organizer_id === user.id)
+  );
 
   return (
     <div>
@@ -161,9 +191,14 @@ const ActivityDetailPage = () => {
                   <UserPlus size={14} /> Бүртгүүлэх
                 </button>
               )}
-              {(user?.role === 'ORGANIZER' || user?.role === 'ADMIN') && !editMode && (
+              {canEdit && !editMode && (
                 <button style={styles.editBtn} onClick={() => setEditMode(true)}>
                   <Edit2 size={14} /> Засварлах
+                </button>
+              )}
+              {canCancel && !editMode && (
+                <button style={styles.cancelActivityBtn} onClick={() => setShowCancelModal(true)}>
+                  <XCircle size={14} /> Цуцлах
                 </button>
               )}
             </div>
@@ -194,10 +229,10 @@ const ActivityDetailPage = () => {
                 <textarea style={{ ...styles.input, height: 80, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
               </div>
               <div style={styles.formActions}>
+                <button style={styles.cancelBtn} type="button" onClick={() => setEditMode(false)}>Болих</button>
                 <button style={styles.submitBtn} type="submit" disabled={updateMutation.isPending}>
                   {updateMutation.isPending ? 'Хадгалж байна...' : 'Хадгалах'}
                 </button>
-                <button style={styles.cancelBtn} type="button" onClick={() => setEditMode(false)}>Болих</button>
               </div>
             </form>
           ) : (
@@ -239,6 +274,7 @@ const ActivityDetailPage = () => {
                       <ParticipationRow
                         key={p.id}
                         participation={p}
+                        activityStatus={activity.status}
                         onVerify={(hours) => verifyMutation.mutate({ userId: p.user_id, hours })}
                         onReject={() => rejectMutation.mutate(p.id)}
                         isVerifying={verifyMutation.isPending}
@@ -253,6 +289,7 @@ const ActivityDetailPage = () => {
         </div>
       )}
 
+      {/* Join Modal */}
       {showJoinModal && (
         <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -282,6 +319,33 @@ const ActivityDetailPage = () => {
         </div>
       )}
 
+      {/* Cancel Modal */}
+      {showCancelModal && (
+        <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#c62828', marginBottom: 12 }}>Үйл ажиллагаа цуцлах</h3>
+            <p style={{ fontSize: 14, color: '#4A5568', marginBottom: 20 }}>
+              Та <strong>{activity.title}</strong> үйл ажиллагааг цуцлахдаа итгэлтэй байна уу? Энэ үйлдлийг буцаах боломжгүй.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                style={{ padding: '9px 24px', background: '#fff', color: '#4A5568', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}
+                onClick={() => setShowCancelModal(false)}
+              >
+                Үгүй
+              </button>
+              <button
+                style={{ padding: '9px 24px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: cancelMutation.isPending ? 0.7 : 1 }}
+                onClick={() => cancelMutation.mutate()}
+                disabled={cancelMutation.isPending}
+              >
+                {cancelMutation.isPending ? 'Цуцалж байна...' : 'Тийм'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes slideIn {
           from { transform: translateY(16px); opacity: 0; }
@@ -302,7 +366,7 @@ const InfoItem = ({ icon, label, value }) => (
   </div>
 );
 
-const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRejecting }) => {
+const ParticipationRow = ({ participation, activityStatus, onVerify, onReject, isVerifying, isRejecting }) => {
   const [hours, setHours] = useState('4');
   const statusMap = {
     APPROVED: { bg: 'rgba(160,213,133,0.2)', color: '#2e7d32', label: 'Баталгаажсан' },
@@ -310,6 +374,10 @@ const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRe
     PENDING:  { bg: 'rgba(243,198,35,0.15)', color: '#b8860b', label: 'Хүлээгдэж байна' },
   };
   const s = statusMap[participation.status] || statusMap.PENDING;
+
+  // Verify/reject only allowed when activity is ONGOING or COMPLETED
+  const canVerify = participation.status === 'PENDING' &&
+    (activityStatus === 'ONGOING' || activityStatus === 'COMPLETED');
 
   return (
     <tr style={styles.tr}>
@@ -319,7 +387,7 @@ const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRe
         <span style={{ ...styles.statusBadge, background: s.bg, color: s.color }}>{s.label}</span>
       </td>
       <td style={{ ...styles.td, textAlign: 'right' }}>
-        {participation.status === 'PENDING' && (
+        {canVerify && (
           <div style={styles.verifyRow}>
             <input
               style={styles.hoursInput}
@@ -341,8 +409,20 @@ const ParticipationRow = ({ participation, onVerify, onReject, isVerifying, isRe
             </button>
           </div>
         )}
+        {participation.status === 'PENDING' && activityStatus === 'UPCOMING' && (
+          <span style={{ fontSize: 12, color: '#718096', fontStyle: 'italic' }}>
+            Үйл ажиллагаа эхлээгүй байна
+          </span>
+        )}
+        {participation.status === 'PENDING' && activityStatus === 'CANCELLED' && (
+          <span style={{ fontSize: 12, color: '#c62828', fontStyle: 'italic' }}>
+            Цуцлагдсан
+          </span>
+        )}
         {participation.status === 'APPROVED' && (
-          <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 600 }}>{participation.hours} цаг ✓</span>
+          <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 600 }}>
+            {participation.hours} цаг ✓
+          </span>
         )}
       </td>
     </tr>
@@ -353,13 +433,14 @@ const styles = {
   loading: { display: 'flex', alignItems: 'center', gap: 10, padding: 60, color: '#718096', fontSize: 14 },
   backBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 20, padding: '7px 14px', background: 'transparent', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#00203D', fontWeight: 500 },
   card: { background: '#FFFFFF', border: '1px solid #E0E0E0', borderRadius: 8, marginBottom: 20, boxShadow: '0 2px 6px rgba(0,32,61,0.06)', overflow: 'hidden' },
-  cardIllustration: { position: 'relative', overflow: 'hidden' },
+  cardIllustration: { position: 'relative', overflow: 'hidden', height: 160 },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 },
   title: { fontSize: 20, fontWeight: 700, color: '#00203D' },
   headerActions: { display: 'flex', alignItems: 'center', gap: 10 },
   badge: { fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.4px' },
   joinBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(160,213,133,0.25)', color: '#2e7d32', border: '1px solid rgba(160,213,133,0.4)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   editBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#00203D', color: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
+  cancelActivityBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(235,76,76,0.1)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   desc: { color: '#4A5568', lineHeight: 1.7, marginBottom: 20, fontSize: 14 },
   infoGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, background: '#F4F6FF', borderRadius: 6, padding: 20 },
   infoItem: { display: 'flex', flexDirection: 'column', gap: 6 },
@@ -370,8 +451,8 @@ const styles = {
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
   field: { marginBottom: 16 },
   label: { display: 'block', marginBottom: 6, color: '#4A5568', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' },
-  input: { width: '100%', padding: '9px 12px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', background: '#FFFFFF', boxSizing: 'border-box', outline: 'none' },
-  formActions: { display: 'flex', gap: 10, marginTop: 4 },
+  input: { width: '100%', padding: '9px 12px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' },
+  formActions: { display: 'flex', gap: 10, marginTop: 4, justifyContent: 'flex-end' },
   submitBtn: { padding: '9px 20px', background: '#00203D', color: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   cancelBtn: { padding: '9px 20px', background: '#FFFFFF', color: '#4A5568', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   sectionHeader: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 },

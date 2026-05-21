@@ -68,9 +68,9 @@ const Layout = () => {
             )}
           </div>
         </div>
-
+        
         <ul className="nav-links">
-          {(user?.role === 'ADMIN') && (
+          {user?.role === 'ADMIN' && (
             <li>
               <NavLink to="/dashboard">
                 <IconDashboard />
@@ -84,18 +84,22 @@ const Layout = () => {
               Үйл ажиллагаа
             </NavLink>
           </li>
-          <li>
-            <NavLink to="/certificates">
-              <IconCertificate />
-              Батламж
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/participations">
-              <IconParticipation />
-              Оролцоо
-            </NavLink>
-          </li>
+          {user?.role === 'VOLUNTEER' && (
+            <li>
+              <NavLink to="/certificates">
+                <IconCertificate />
+                Батламж
+              </NavLink>
+            </li>
+          )}
+          {user?.role === 'VOLUNTEER' && (
+            <li>
+              <NavLink to="/participations">
+                <IconParticipation />
+                Оролцоо
+              </NavLink>
+            </li>
+          )}
           {user?.role === 'ADMIN' && (
             <li>
               <NavLink to="/admin/users">

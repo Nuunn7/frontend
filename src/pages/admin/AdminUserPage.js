@@ -96,9 +96,9 @@ const AdminUsersPage = () => {
                 <th style={styles.th}>#</th>
                 <th style={styles.th}>Нэр</th>
                 <th style={styles.th}>И-мэйл</th>
-                <th style={styles.th}>Регистр</th>
+                <th style={styles.th}>Код</th>
                 <th style={styles.th}>Эрх</th>
-                <th style={styles.th}>Бүртгэгдсэн</th>
+                <th style={styles.th}>Бүртгэгдсэн огноо</th>
                 <th style={styles.th}>Үйлдэл</th>
               </tr>
             </thead>
