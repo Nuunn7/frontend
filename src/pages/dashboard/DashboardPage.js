@@ -6,10 +6,10 @@ import { activityApi, userApi } from '../../api';
 import { Activity, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const STATUS_COLORS = {
-  UPCOMING:  { hex: '#185FA5', label: 'Удахгүй'       },
-  ONGOING:   { hex: '#BA7517', label: 'Явагдаж байна' },
-  COMPLETED: { hex: '#0C447C', label: 'Дууссан'        },
-  CANCELLED: { hex: '#A32D2D', label: 'Цуцлагдсан'    },
+  UPCOMING:  { hex: '#818CF8', label: 'Удахгүй'       },
+  ONGOING:   { hex: '#FBBF24', label: 'Явагдаж байна' },
+  COMPLETED: { hex: '#34D399', label: 'Дууссан'        },
+  CANCELLED: { hex: '#FB7185', label: 'Цуцлагдсан'    },
 };
 
 const loadChartJs = () => new Promise((resolve) => {
@@ -35,7 +35,7 @@ const StatCard = ({ label, value, sub, icon, color }) => (
 
 const StatusBadge = ({ status }) => {
   const map = {
-    UPCOMING:  { label: 'Удахгүй',       bg: 'rgba(219,234,254,0.7)', color: '#1e40af' },
+    UPCOMING:  { label: 'Удахгүй',       bg: 'rgba(219,234,254,0.7)', color: '#9ecefd' },
     ONGOING:   { label: 'Явагдаж байна', bg: 'rgba(254,243,199,0.7)', color: '#92400e' },
     COMPLETED: { label: 'Дууссан',        bg: 'rgba(220,252,231,0.7)', color: '#166534' },
     CANCELLED: { label: 'Цуцлагдсан',    bg: 'rgba(254,226,226,0.7)', color: '#991b1b' },
@@ -113,8 +113,7 @@ const BarChart = ({ data }) => {
           labels: data.map(d => d.name),
           datasets: [{
             data: data.map(d => d.value),
-            backgroundColor: data.map((_, i) => `rgba(24,95,165,${(1 - i * 0.12).toFixed(2)})`),
-            borderRadius: 4,
+            backgroundColor: data.map((_, i) => `rgba(129,140,248,${(1 - i * 0.12).toFixed(2)})`),            borderRadius: 4,
             borderSkipped: false,
           }],
         },

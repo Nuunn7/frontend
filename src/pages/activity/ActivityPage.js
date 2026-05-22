@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -8,6 +8,8 @@ import {
 import { activityApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import CardIllustration from '../../components/CardIllustration';
+
+const LIMIT = 6;
 
 const Toast = ({ message, type, onClose }) => (
   <div style={{
@@ -20,6 +22,38 @@ const Toast = ({ message, type, onClose }) => (
   }}>
     <span>{message}</span>
     <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+  </div>
+);
+
+const CustomSelect = ({ value, onChange, options }) => (
+  <div style={{ position: 'relative', flexShrink: 0 }}>
+    <select
+      value={value}
+      onChange={onChange}
+      style={{
+        padding: '9px 28px 9px 12px',
+        border: '1px solid #E0E0E0',
+        borderRadius: 6,
+        fontSize: 13,
+        color: '#00203D',
+        background: '#fff',
+        outline: 'none',
+        cursor: 'pointer',
+        appearance: 'none',
+        WebkitAppearance: 'none',
+        MozAppearance: 'none',
+      }}
+    >
+      {options.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+    <svg
+      style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+      width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#718096" strokeWidth="2.5"
+    >
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
   </div>
 );
 
@@ -79,9 +113,13 @@ const ActivitiesPage = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [organizerFilter, setOrganizerFilter] = useState('');
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState({
     title: '', description: '', date: '', location: '', maxParticipants: '',
   });
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, statusFilter, organizerFilter]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -100,9 +138,11 @@ const ActivitiesPage = () => {
   const createMutation = useMutation({
     mutationFn: activityApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries(['activities']);
+      // invalidate all queries that start with 'activities'
+      queryClient.invalidateQueries({ queryKey: ['activities'], exact: false });
       setShowForm(false);
       setForm({ title: '', description: '', date: '', location: '', maxParticipants: '' });
+      setPage(1);
       showToast('Үйл ажиллагаа амжилттай нэмэгдлээ!');
     },
     onError: (err) => showToast(err.response?.data?.message || 'Алдаа гарлаа', 'error'),
@@ -117,17 +157,18 @@ const ActivitiesPage = () => {
     user?.role === 'VOLUNTEER' ? a.status !== 'CANCELLED' : true
   );
 
-  // Unique organizers for admin filter
   const organizers = [...new Map(
     allActivities
       .filter(a => a.organizer_name)
       .map(a => [a.organizer_id, { id: a.organizer_id, name: a.organizer_name }])
   ).values()];
 
-  // Apply organizer filter
-  const activities = organizerFilter
+  const filtered = organizerFilter
     ? allActivities.filter(a => a.organizer_id === parseInt(organizerFilter))
     : allActivities;
+
+  const totalPages = Math.ceil(filtered.length / LIMIT);
+  const activities = filtered.slice((page - 1) * LIMIT, page * LIMIT);
 
   const isOrgAdmin = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
 
@@ -147,7 +188,7 @@ const ActivitiesPage = () => {
       <div style={styles.header}>
         <div>
           <h1 style={styles.title}>Үйл ажиллагаа</h1>
-          <p style={styles.subtitle}>Нийт {activities.length} үйл ажиллагаа</p>
+          <p style={styles.subtitle}>Нийт {filtered.length} үйл ажиллагаа</p>
         </div>
         {isOrgAdmin && (
           <button
@@ -174,28 +215,28 @@ const ActivitiesPage = () => {
             </button>
           )}
         </div>
-        <select
-          style={styles.select}
+
+        <CustomSelect
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">Бүх төлөв</option>
-          <option value="UPCOMING">Удахгүй</option>
-          <option value="ONGOING">Явагдаж байна</option>
-          <option value="COMPLETED">Дууссан</option>
-          <option value="CANCELLED">Цуцлагдсан</option>
-        </select>
+          options={[
+            { value: '', label: 'Бүх төлөв' },
+            { value: 'UPCOMING', label: 'Удахгүй' },
+            { value: 'ONGOING', label: 'Явагдаж байна' },
+            { value: 'COMPLETED', label: 'Дууссан' },
+            { value: 'CANCELLED', label: 'Цуцлагдсан' },
+          ]}
+        />
+
         {user?.role === 'ADMIN' && organizers.length > 1 && (
-          <select
-            style={styles.select}
+          <CustomSelect
             value={organizerFilter}
             onChange={(e) => setOrganizerFilter(e.target.value)}
-          >
-            <option value="">Бүгд</option>
-            {organizers.map(o => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Бүгд' },
+              ...organizers.map(o => ({ value: String(o.id), label: o.name })),
+            ]}
+          />
         )}
       </div>
 
@@ -234,7 +275,7 @@ const ActivitiesPage = () => {
         </div>
       )}
 
-      {activities.length === 0 ? (
+      {filtered.length === 0 ? (
         <div style={styles.empty}>
           <Inbox size={40} color="#C3D6EA" style={{ marginBottom: 12 }} />
           <p style={{ fontWeight: 600, color: '#00203D', marginBottom: 4 }}>
@@ -245,11 +286,41 @@ const ActivitiesPage = () => {
           </small>
         </div>
       ) : (
-        <div style={styles.grid}>
-          {activities.map((activity, index) => (
-            <ActivityCard key={activity.id} activity={activity} index={index} navigate={navigate} />
-          ))}
-        </div>
+        <>
+          <div style={styles.grid}>
+            {activities.map((activity, index) => (
+              <ActivityCard key={activity.id} activity={activity} index={(page - 1) * LIMIT + index} navigate={navigate} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div style={styles.pagination}>
+              <button
+                style={{ ...styles.pageBtn, opacity: page === 1 ? 0.4 : 1 }}
+                onClick={() => setPage(p => p - 1)}
+                disabled={page === 1}
+              >
+                ←
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  style={{ ...styles.pageBtn, ...(p === page ? styles.pageBtnActive : {}) }}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                style={{ ...styles.pageBtn, opacity: page === totalPages ? 0.4 : 1 }}
+                onClick={() => setPage(p => p + 1)}
+                disabled={page === totalPages}
+              >
+                →
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <style>{`
@@ -268,12 +339,11 @@ const styles = {
   subtitle: { fontSize: 13, color: '#718096' },
   btnAdd: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#00203D', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   btnCancel: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', color: '#00203D', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
-  filterBar: { display: 'flex', gap: 12, marginBottom: 20 },
+  filterBar: { display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' },
   searchWrapper: { position: 'relative', flex: 1 },
   searchIcon: { position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' },
   searchInput: { width: '100%', padding: '9px 36px 9px 32px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', boxSizing: 'border-box', outline: 'none', background: '#fff' },
   clearBtn: { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#718096', display: 'flex', alignItems: 'center', padding: 2 },
-  select: { padding: '9px 12px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', background: '#fff', outline: 'none', cursor: 'pointer' },
   loading: { display: 'flex', alignItems: 'center', gap: 10, padding: 32, color: '#718096', fontSize: 14 },
   empty: { textAlign: 'center', padding: '60px 20px', background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8 },
   formCard: { background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8, padding: 24, marginBottom: 24, borderTop: '3px solid #00203D' },
@@ -292,6 +362,9 @@ const styles = {
   infoRow: { display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#718096' },
   cardFooter: { display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 'auto' },
   detailBtn: { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: '#F4F6FF', color: '#00203D', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500 },
+  pagination: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 24 },
+  pageBtn: { padding: '6px 12px', border: '1px solid #E0E0E0', borderRadius: 6, background: '#fff', color: '#00203D', cursor: 'pointer', fontSize: 13, fontWeight: 500, minWidth: 36, textAlign: 'center' },
+  pageBtnActive: { background: '#00203D', color: '#fff', borderColor: '#00203D' },
 };
 
 export default ActivitiesPage;

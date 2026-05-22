@@ -138,12 +138,12 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div style={styles.field}>
-                  <label style={styles.label}>Регистрийн дугаар</label>
+                  <label style={styles.label}>Код</label>
                   <input
                     style={styles.input}
                     value={profile.identifier}
                     onChange={(e) => setProfile({ ...profile, identifier: e.target.value })}
-                    placeholder="Регистрийн дугаар"
+                    placeholder="Код"
                   />
                 </div>
                 <div style={styles.field}>

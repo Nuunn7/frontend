@@ -14,6 +14,7 @@ import CertificatesPage from './pages/certificate/CertificatesPage';
 import MyParticipationsPage from './pages/participation/MyParticipationsPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import AdminUsersPage from './pages/admin/AdminUserPage';
+import ReportsPage from './pages/reports/ReportsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 1000 * 60 * 5 } },
@@ -61,6 +62,7 @@ const AppRoutes = () => (
       <Route path="participations" element={<MyParticipationsPage />} />
       <Route path="profile" element={<ProfilePage />} />
       <Route path="admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+      <Route path="reports" element={<ReportsPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>

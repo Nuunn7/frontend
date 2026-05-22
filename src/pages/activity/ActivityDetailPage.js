@@ -201,6 +201,11 @@ const ActivityDetailPage = () => {
                   <XCircle size={14} /> Цуцлах
                 </button>
               )}
+              {canEdit && !editMode && (
+                <button style={styles.reportBtn} onClick={generateReport}>
+                  📄 Тайлан
+                </button>
+              )}
             </div>
           </div>
 
@@ -265,7 +270,7 @@ const ActivityDetailPage = () => {
                     <tr style={styles.thead}>
                       <th style={{ ...styles.th, width: '15%' }}>Нэр</th>
                       <th style={{ ...styles.th, width: '20%' }}>И-мэйл</th>
-                      <th style={{ ...styles.th, width: '15%' }}>Статус</th>
+                      <th style={{ ...styles.th, width: '15%' }}>Төлөв</th>
                       <th style={{ ...styles.th, width: '50%', textAlign: 'right' }}>Үйлдэл</th>
                     </tr>
                   </thead>
@@ -427,6 +432,86 @@ const ParticipationRow = ({ participation, activityStatus, onVerify, onReject, i
       </td>
     </tr>
   );
+};
+
+const generateReport = async () => {
+  const loadScript = (src) => new Promise(resolve => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve;
+    document.head.appendChild(s);
+  });
+
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFillColor(0, 32, 61);
+  doc.rect(0, 0, pageW, 28, 'F');
+  doc.setTextColor(195, 214, 234);
+  doc.setFontSize(9);
+  doc.text('VolunteerChain · ШУТИС · Х. Өнөгэрэл', 14, 10);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(15);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Уйл ажиллагааны тайлан', 14, 22);
+
+  doc.setTextColor(0, 32, 61);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text(activity.title, 14, 42);
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  const statusLabels = { UPCOMING: 'Удахгүй', ONGOING: 'Явагдаж байна', COMPLETED: 'Дууссан', CANCELLED: 'Цуцлагдсан' };
+  doc.autoTable({
+    startY: 48,
+    theme: 'plain',
+    styles: { fontSize: 10, cellPadding: 3 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: [100, 100, 100] }, 1: { textColor: [0, 32, 61] } },
+    body: [
+      ['Байршил',           activity.location],
+      ['Огноо',             new Date(activity.date).toLocaleString('mn-MN')],
+      ['Зохион байгуулагч', activity.organizer_name],
+      ['Оролцогч',          `${activity.participant_count || 0}${activity.max_participants ? ' / ' + activity.max_participants : ''}`],
+      ['Төлөв',            statusLabels[activity.status] || activity.status],
+    ],
+  });
+
+  if (participations.length > 0) {
+    const y = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 32, 61);
+    doc.text('Оролцогчид', 14, y);
+
+    const statusMap = { APPROVED: 'Баталгаажсан', REJECTED: 'Татгалзсан', PENDING: 'Хүлээгдэж байна' };
+    doc.autoTable({
+      startY: y + 4,
+      head: [['#', 'Нэр', 'И-мэйл', 'Төлөв', 'Цаг']],
+      body: participations.map((p, i) => [
+        i + 1,
+        p.user_name,
+        p.user_email,
+        statusMap[p.status] || p.status,
+        p.hours ? `${p.hours} цаг` : '-',
+      ]),
+      headStyles: { fillColor: [0, 32, 61], textColor: [195, 214, 234], fontSize: 10, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10, textColor: [0, 32, 61] },
+      alternateRowStyles: { fillColor: [244, 246, 255] },
+      styles: { cellPadding: 4 },
+    });
+  }
+
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text(`Тайлан үүсгэсэн: ${new Date().toLocaleString('mn-MN')}`, 14, doc.internal.pageSize.getHeight() - 10);
+
+  doc.save(`${activity.title}-тайлан.pdf`);
 };
 
 const styles = {
