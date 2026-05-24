@@ -457,7 +457,7 @@ const generateReport = async () => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(15);
   doc.setFont('helvetica', 'bold');
-  doc.text('Уйл ажиллагааны тайлан', 14, 22);
+  doc.text('Uйл ажиллагааны тайлан', 14, 22);
 
   doc.setTextColor(0, 32, 61);
   doc.setFontSize(13);
@@ -467,18 +467,18 @@ const generateReport = async () => {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(80, 80, 80);
-  const statusLabels = { UPCOMING: 'Удахгүй', ONGOING: 'Явагдаж байна', COMPLETED: 'Дууссан', CANCELLED: 'Цуцлагдсан' };
+  const statusLabels = { UPCOMING: 'Udakhgui', ONGOING: 'Yavagdaj baina', COMPLETED: 'Duussaan', CANCELLED: 'Tsutslагдсан' };
   doc.autoTable({
     startY: 48,
     theme: 'plain',
     styles: { fontSize: 10, cellPadding: 3 },
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: [100, 100, 100] }, 1: { textColor: [0, 32, 61] } },
     body: [
-      ['Байршил',           activity.location],
-      ['Огноо',             new Date(activity.date).toLocaleString('mn-MN')],
-      ['Зохион байгуулагч', activity.organizer_name],
-      ['Оролцогч',          `${activity.participant_count || 0}${activity.max_participants ? ' / ' + activity.max_participants : ''}`],
-      ['Төлөв',            statusLabels[activity.status] || activity.status],
+      ['Bairshil',           activity.location],
+      ['Ognoo',             new Date(activity.date).toLocaleString('mn-MN')],
+      ['Zohion baiguulagch', activity.organizer_name],
+      ['Oroltsogch',          `${activity.participant_count || 0}${activity.max_participants ? ' / ' + activity.max_participants : ''}`],
+      ['Tuluw',            statusLabels[activity.status] || activity.status],
     ],
   });
 
@@ -487,18 +487,18 @@ const generateReport = async () => {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 32, 61);
-    doc.text('Оролцогчид', 14, y);
+    doc.text('Oroltsogchid', 14, y);
 
-    const statusMap = { APPROVED: 'Баталгаажсан', REJECTED: 'Татгалзсан', PENDING: 'Хүлээгдэж байна' };
+    const statusMap = { APPROVED: 'Batalgaajsan', REJECTED: 'Tatgalzsan', PENDING: 'Khuleegdej baina' };
     doc.autoTable({
       startY: y + 4,
-      head: [['#', 'Нэр', 'И-мэйл', 'Төлөв', 'Цаг']],
+      head: [['#', 'Ner', 'I-meyl', 'Tuluv', 'Tsag']],
       body: participations.map((p, i) => [
         i + 1,
         p.user_name,
         p.user_email,
         statusMap[p.status] || p.status,
-        p.hours ? `${p.hours} цаг` : '-',
+        p.hours ? `${p.hours} tsag` : '-',
       ]),
       headStyles: { fillColor: [0, 32, 61], textColor: [195, 214, 234], fontSize: 10, fontStyle: 'bold' },
       bodyStyles: { fontSize: 10, textColor: [0, 32, 61] },
@@ -509,9 +509,9 @@ const generateReport = async () => {
 
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Тайлан үүсгэсэн: ${new Date().toLocaleString('mn-MN')}`, 14, doc.internal.pageSize.getHeight() - 10);
+  doc.text(`Tailan uusgesen: ${new Date().toLocaleString('mn-MN')}`, 14, doc.internal.pageSize.getHeight() - 10);
 
-  doc.save(`${activity.title}-тайлан.pdf`);
+  doc.save(`${activity.title}-tailan.pdf`);
 };
 
 const styles = {
