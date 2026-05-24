@@ -173,74 +173,68 @@ const ActivityDetailPage = () => {
     });
 
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+
+    const statusLabels = { UPCOMING: 'Удахгүй', ONGOING: 'Явагдаж байна', COMPLETED: 'Дууссан', CANCELLED: 'Цуцлагдсан' };
+    const statusMap = { APPROVED: 'Баталгаажсан', REJECTED: 'Татгалзсан', PENDING: 'Хүлээгдэж байна' };
+
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;padding:40px;background:#fff;font-family:Arial,sans-serif;color:#00203D;';
+    div.innerHTML = `
+      <div style="background:#00203D;padding:16px 24px;margin:-40px -40px 24px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="color:#C3D6EA;font-size:11px;margin-bottom:4px;">VolunteerChain · ШУТИС · Х. Өнөгэрэл</div>
+          <div style="color:#fff;font-size:18px;font-weight:bold;">Үйл ажиллагааны тайлан</div>
+        </div>
+        <div style="color:#C3D6EA;font-size:11px;">${new Date().toLocaleDateString('mn-MN')}</div>
+      </div>
+      <h2 style="font-size:16px;margin:0 0 16px;">${activity.title}</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">
+        <tr><td style="padding:6px 0;color:#718096;width:140px;">Байршил</td><td>${activity.location}</td></tr>
+        <tr><td style="padding:6px 0;color:#718096;">Огноо</td><td>${new Date(activity.date).toLocaleString('mn-MN')}</td></tr>
+        <tr><td style="padding:6px 0;color:#718096;">Зохион байгуулагч</td><td>${activity.organizer_name}</td></tr>
+        <tr><td style="padding:6px 0;color:#718096;">Оролцогч</td><td>${activity.participant_count || 0}${activity.max_participants ? ' / ' + activity.max_participants : ''}</td></tr>
+        <tr><td style="padding:6px 0;color:#718096;">Төлөв</td><td>${statusLabels[activity.status] || activity.status}</td></tr>
+      </table>
+      ${participations.length > 0 ? `
+      <div style="font-size:14px;font-weight:bold;margin-bottom:10px;">Оролцогчид</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="background:#00203D;color:#C3D6EA;">
+            <th style="padding:8px 10px;text-align:left;">#</th>
+            <th style="padding:8px 10px;text-align:left;">Нэр</th>
+            <th style="padding:8px 10px;text-align:left;">И-мэйл</th>
+            <th style="padding:8px 10px;text-align:left;">Төлөв</th>
+            <th style="padding:8px 10px;text-align:left;">Цаг</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${participations.map((p, i) => `
+            <tr style="background:${i % 2 === 0 ? '#F4F6FF' : '#fff'};">
+              <td style="padding:7px 10px;">${i + 1}</td>
+              <td style="padding:7px 10px;">${p.user_name}</td>
+              <td style="padding:7px 10px;">${p.user_email}</td>
+              <td style="padding:7px 10px;">${statusMap[p.status] || p.status}</td>
+              <td style="padding:7px 10px;">${p.hours ? p.hours + ' цаг' : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>` : ''}
+    `;
+
+    document.body.appendChild(div);
+
+    const canvas = await window.html2canvas(div, { scale: 2, useCORS: true });
+    document.body.removeChild(div);
 
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF({ unit: 'px', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const imgH = (canvas.height * pageW) / canvas.width;
 
-    doc.setFillColor(0, 32, 61);
-    doc.rect(0, 0, pageW, 28, 'F');
-    doc.setTextColor(195, 214, 234);
-    doc.setFontSize(9);
-    doc.text('VolunteerChain · SHUTIS · Kh. Unugerel', 14, 10);
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(15);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Activity Report', 14, 22);
-
-    doc.setTextColor(0, 32, 61);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text(activity.title, 14, 42);
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
-    const statusLabels = { UPCOMING: 'Upcoming', ONGOING: 'Ongoing', COMPLETED: 'Completed', CANCELLED: 'Cancelled' };
-    doc.autoTable({
-      startY: 48,
-      theme: 'plain',
-      styles: { fontSize: 10, cellPadding: 3 },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: [100, 100, 100] }, 1: { textColor: [0, 32, 61] } },
-      body: [
-        ['Location',   activity.location],
-        ['Date',       new Date(activity.date).toLocaleString()],
-        ['Organizer',  activity.organizer_name],
-        ['Participants', `${activity.participant_count || 0}${activity.max_participants ? ' / ' + activity.max_participants : ''}`],
-        ['Status',     statusLabels[activity.status] || activity.status],
-      ],
-    });
-
-    if (participations.length > 0) {
-      const y = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 32, 61);
-      doc.text('Participants', 14, y);
-
-      const statusMap = { APPROVED: 'Verified', REJECTED: 'Rejected', PENDING: 'Pending' };
-      doc.autoTable({
-        startY: y + 4,
-        head: [['#', 'Name', 'Email', 'Status', 'Hours']],
-        body: participations.map((p, i) => [
-          i + 1,
-          p.user_name,
-          p.user_email,
-          statusMap[p.status] || p.status,
-          p.hours ? `${p.hours}h` : '-',
-        ]),
-        headStyles: { fillColor: [0, 32, 61], textColor: [195, 214, 234], fontSize: 10, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 10, textColor: [0, 32, 61] },
-        alternateRowStyles: { fillColor: [244, 246, 255] },
-        styles: { cellPadding: 4 },
-      });
-    }
-
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, doc.internal.pageSize.getHeight() - 10);
-    doc.save(`${activity.title}-report.pdf`);
+    doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
+    doc.save(`${activity.title}-тайлан.pdf`);
   };
 
   return (
