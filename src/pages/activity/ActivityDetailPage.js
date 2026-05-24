@@ -555,6 +555,7 @@ const styles = {
   hoursInput: { width: 80, padding: '6px 8px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', outline: 'none' },
   verifyBtn: { padding: '6px 10px', background: '#A0D585', color: '#1a3a0a', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600 },
   rejectBtn: { padding: '6px 10px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600 },
+  reportBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(195,214,234,0.3)', color: '#00203D', border: '1px solid #C3D6EA', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
 };
 
 export default ActivityDetailPage;
