@@ -164,6 +164,85 @@ const ActivityDetailPage = () => {
     (user?.role === 'ORGANIZER' && activity.organizer_id === user.id)
   );
 
+  const generateReport = async () => {
+    const loadScript = (src) => new Promise(resolve => {
+      if (document.querySelector(`script[src="${src}"]`)) return resolve();
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve;
+      document.head.appendChild(s);
+    });
+
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFillColor(0, 32, 61);
+    doc.rect(0, 0, pageW, 28, 'F');
+    doc.setTextColor(195, 214, 234);
+    doc.setFontSize(9);
+    doc.text('VolunteerChain · SHUTIS · Kh. Unugerel', 14, 10);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Activity Report', 14, 22);
+
+    doc.setTextColor(0, 32, 61);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text(activity.title, 14, 42);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    const statusLabels = { UPCOMING: 'Upcoming', ONGOING: 'Ongoing', COMPLETED: 'Completed', CANCELLED: 'Cancelled' };
+    doc.autoTable({
+      startY: 48,
+      theme: 'plain',
+      styles: { fontSize: 10, cellPadding: 3 },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: [100, 100, 100] }, 1: { textColor: [0, 32, 61] } },
+      body: [
+        ['Location',   activity.location],
+        ['Date',       new Date(activity.date).toLocaleString()],
+        ['Organizer',  activity.organizer_name],
+        ['Participants', `${activity.participant_count || 0}${activity.max_participants ? ' / ' + activity.max_participants : ''}`],
+        ['Status',     statusLabels[activity.status] || activity.status],
+      ],
+    });
+
+    if (participations.length > 0) {
+      const y = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 32, 61);
+      doc.text('Participants', 14, y);
+
+      const statusMap = { APPROVED: 'Verified', REJECTED: 'Rejected', PENDING: 'Pending' };
+      doc.autoTable({
+        startY: y + 4,
+        head: [['#', 'Name', 'Email', 'Status', 'Hours']],
+        body: participations.map((p, i) => [
+          i + 1,
+          p.user_name,
+          p.user_email,
+          statusMap[p.status] || p.status,
+          p.hours ? `${p.hours}h` : '-',
+        ]),
+        headStyles: { fillColor: [0, 32, 61], textColor: [195, 214, 234], fontSize: 10, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 10, textColor: [0, 32, 61] },
+        alternateRowStyles: { fillColor: [244, 246, 255] },
+        styles: { cellPadding: 4 },
+      });
+    }
+
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, doc.internal.pageSize.getHeight() - 10);
+    doc.save(`${activity.title}-report.pdf`);
+  };
+
   return (
     <div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
@@ -294,7 +373,6 @@ const ActivityDetailPage = () => {
         </div>
       )}
 
-      {/* Join Modal */}
       {showJoinModal && (
         <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -306,17 +384,8 @@ const ActivityDetailPage = () => {
               <InfoItem icon={<Calendar size={16} />} label="Огноо"   value={new Date(activity.date).toLocaleDateString('mn-MN')} />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button
-                style={{ padding: '9px 24px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}
-                onClick={() => setShowJoinModal(false)}
-              >
-                Үгүй
-              </button>
-              <button
-                style={{ padding: '9px 24px', background: 'rgba(160,213,133,0.25)', color: '#2e7d32', border: '1px solid rgba(160,213,133,0.4)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: joinMutation.isPending ? 0.7 : 1 }}
-                onClick={() => joinMutation.mutate()}
-                disabled={joinMutation.isPending}
-              >
+              <button style={{ padding: '9px 24px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 }} onClick={() => setShowJoinModal(false)}>Үгүй</button>
+              <button style={{ padding: '9px 24px', background: 'rgba(160,213,133,0.25)', color: '#2e7d32', border: '1px solid rgba(160,213,133,0.4)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: joinMutation.isPending ? 0.7 : 1 }} onClick={() => joinMutation.mutate()} disabled={joinMutation.isPending}>
                 {joinMutation.isPending ? 'Бүртгэж байна...' : 'Тийм'}
               </button>
             </div>
@@ -324,7 +393,6 @@ const ActivityDetailPage = () => {
         </div>
       )}
 
-      {/* Cancel Modal */}
       {showCancelModal && (
         <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -333,17 +401,8 @@ const ActivityDetailPage = () => {
               Та <strong>{activity.title}</strong> үйл ажиллагааг цуцлахдаа итгэлтэй байна уу? Энэ үйлдлийг буцаах боломжгүй.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button
-                style={{ padding: '9px 24px', background: '#fff', color: '#4A5568', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}
-                onClick={() => setShowCancelModal(false)}
-              >
-                Үгүй
-              </button>
-              <button
-                style={{ padding: '9px 24px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: cancelMutation.isPending ? 0.7 : 1 }}
-                onClick={() => cancelMutation.mutate()}
-                disabled={cancelMutation.isPending}
-              >
+              <button style={{ padding: '9px 24px', background: '#fff', color: '#4A5568', border: '1px solid #E0E0E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 }} onClick={() => setShowCancelModal(false)}>Үгүй</button>
+              <button style={{ padding: '9px 24px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: cancelMutation.isPending ? 0.7 : 1 }} onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending}>
                 {cancelMutation.isPending ? 'Цуцалж байна...' : 'Тийм'}
               </button>
             </div>
@@ -379,8 +438,6 @@ const ParticipationRow = ({ participation, activityStatus, onVerify, onReject, i
     PENDING:  { bg: 'rgba(243,198,35,0.15)', color: '#b8860b', label: 'Хүлээгдэж байна' },
   };
   const s = statusMap[participation.status] || statusMap.PENDING;
-
-  // Verify/reject only allowed when activity is ONGOING or COMPLETED
   const canVerify = participation.status === 'PENDING' &&
     (activityStatus === 'ONGOING' || activityStatus === 'COMPLETED');
 
@@ -394,124 +451,23 @@ const ParticipationRow = ({ participation, activityStatus, onVerify, onReject, i
       <td style={{ ...styles.td, textAlign: 'right' }}>
         {canVerify && (
           <div style={styles.verifyRow}>
-            <input
-              style={styles.hoursInput}
-              type="number" placeholder="Цаг"
-              value={hours} onChange={(e) => setHours(e.target.value)}
-              min="0" step="0.5"
-            />
-            <button
-              style={{ ...styles.verifyBtn, opacity: !hours || isVerifying ? 0.6 : 1, cursor: !hours || isVerifying ? 'not-allowed' : 'pointer' }}
-              onClick={() => onVerify(hours)} disabled={!hours || isVerifying}
-            >
-              Баталгаажуулах
-            </button>
-            <button
-              style={{ ...styles.rejectBtn, opacity: isRejecting ? 0.6 : 1, cursor: isRejecting ? 'not-allowed' : 'pointer' }}
-              onClick={onReject} disabled={isRejecting}
-            >
-              Татгалзах
-            </button>
+            <input style={styles.hoursInput} type="number" placeholder="Цаг" value={hours} onChange={(e) => setHours(e.target.value)} min="0" step="0.5" />
+            <button style={{ ...styles.verifyBtn, opacity: !hours || isVerifying ? 0.6 : 1, cursor: !hours || isVerifying ? 'not-allowed' : 'pointer' }} onClick={() => onVerify(hours)} disabled={!hours || isVerifying}>Баталгаажуулах</button>
+            <button style={{ ...styles.rejectBtn, opacity: isRejecting ? 0.6 : 1, cursor: isRejecting ? 'not-allowed' : 'pointer' }} onClick={onReject} disabled={isRejecting}>Татгалзах</button>
           </div>
         )}
         {participation.status === 'PENDING' && activityStatus === 'UPCOMING' && (
-          <span style={{ fontSize: 12, color: '#718096', fontStyle: 'italic' }}>
-            Үйл ажиллагаа эхлээгүй байна
-          </span>
+          <span style={{ fontSize: 12, color: '#718096', fontStyle: 'italic' }}>Үйл ажиллагаа эхлээгүй байна</span>
         )}
         {participation.status === 'PENDING' && activityStatus === 'CANCELLED' && (
-          <span style={{ fontSize: 12, color: '#c62828', fontStyle: 'italic' }}>
-            Цуцлагдсан
-          </span>
+          <span style={{ fontSize: 12, color: '#c62828', fontStyle: 'italic' }}>Цуцлагдсан</span>
         )}
         {participation.status === 'APPROVED' && (
-          <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 600 }}>
-            {participation.hours} цаг ✓
-          </span>
+          <span style={{ fontSize: 12, color: '#2e7d32', fontWeight: 600 }}>{participation.hours} цаг ✓</span>
         )}
       </td>
     </tr>
   );
-};
-
-const generateReport = async () => {
-  const loadScript = (src) => new Promise(resolve => {
-    if (document.querySelector(`script[src="${src}"]`)) return resolve();
-    const s = document.createElement('script');
-    s.src = src; s.onload = resolve;
-    document.head.appendChild(s);
-  });
-
-  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const pageW = doc.internal.pageSize.getWidth();
-
-  doc.setFillColor(0, 32, 61);
-  doc.rect(0, 0, pageW, 28, 'F');
-  doc.setTextColor(195, 214, 234);
-  doc.setFontSize(9);
-  doc.text('VolunteerChain · ШУТИС · Х. Өнөгэрэл', 14, 10);
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(15);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Uйл ажиллагааны тайлан', 14, 22);
-
-  doc.setTextColor(0, 32, 61);
-  doc.setFontSize(13);
-  doc.setFont('helvetica', 'bold');
-  doc.text(activity.title, 14, 42);
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(80, 80, 80);
-  const statusLabels = { UPCOMING: 'Udakhgui', ONGOING: 'Yavagdaj baina', COMPLETED: 'Duussaan', CANCELLED: 'Tsutslагдсан' };
-  doc.autoTable({
-    startY: 48,
-    theme: 'plain',
-    styles: { fontSize: 10, cellPadding: 3 },
-    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50, textColor: [100, 100, 100] }, 1: { textColor: [0, 32, 61] } },
-    body: [
-      ['Bairshil',           activity.location],
-      ['Ognoo',             new Date(activity.date).toLocaleString('mn-MN')],
-      ['Zohion baiguulagch', activity.organizer_name],
-      ['Oroltsogch',          `${activity.participant_count || 0}${activity.max_participants ? ' / ' + activity.max_participants : ''}`],
-      ['Tuluw',            statusLabels[activity.status] || activity.status],
-    ],
-  });
-
-  if (participations.length > 0) {
-    const y = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 32, 61);
-    doc.text('Oroltsogchid', 14, y);
-
-    const statusMap = { APPROVED: 'Batalgaajsan', REJECTED: 'Tatgalzsan', PENDING: 'Khuleegdej baina' };
-    doc.autoTable({
-      startY: y + 4,
-      head: [['#', 'Ner', 'I-meyl', 'Tuluv', 'Tsag']],
-      body: participations.map((p, i) => [
-        i + 1,
-        p.user_name,
-        p.user_email,
-        statusMap[p.status] || p.status,
-        p.hours ? `${p.hours} tsag` : '-',
-      ]),
-      headStyles: { fillColor: [0, 32, 61], textColor: [195, 214, 234], fontSize: 10, fontStyle: 'bold' },
-      bodyStyles: { fontSize: 10, textColor: [0, 32, 61] },
-      alternateRowStyles: { fillColor: [244, 246, 255] },
-      styles: { cellPadding: 4 },
-    });
-  }
-
-  doc.setFontSize(8);
-  doc.setTextColor(150, 150, 150);
-  doc.text(`Tailan uusgesen: ${new Date().toLocaleString('mn-MN')}`, 14, doc.internal.pageSize.getHeight() - 10);
-
-  doc.save(`${activity.title}-tailan.pdf`);
 };
 
 const styles = {
@@ -526,6 +482,7 @@ const styles = {
   joinBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(160,213,133,0.25)', color: '#2e7d32', border: '1px solid rgba(160,213,133,0.4)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   editBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#00203D', color: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   cancelActivityBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(235,76,76,0.1)', color: '#c62828', border: '1px solid rgba(235,76,76,0.3)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
+  reportBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(195,214,234,0.3)', color: '#00203D', border: '1px solid #C3D6EA', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
   desc: { color: '#4A5568', lineHeight: 1.7, marginBottom: 20, fontSize: 14 },
   infoGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, background: '#F4F6FF', borderRadius: 6, padding: 20 },
   infoItem: { display: 'flex', flexDirection: 'column', gap: 6 },
@@ -555,7 +512,6 @@ const styles = {
   hoursInput: { width: 80, padding: '6px 8px', border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, color: '#00203D', outline: 'none' },
   verifyBtn: { padding: '6px 10px', background: '#A0D585', color: '#1a3a0a', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600 },
   rejectBtn: { padding: '6px 10px', background: 'rgba(235,76,76,0.12)', color: '#c62828', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600 },
-  reportBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(195,214,234,0.3)', color: '#00203D', border: '1px solid #C3D6EA', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 },
 };
 
 export default ActivityDetailPage;
